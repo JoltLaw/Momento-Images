@@ -14,19 +14,21 @@ import MomentoBTN from "../components/general/MomentoBTN";
 import { storage, auth, db } from "../firebase/firebase";
 import { ref as dbRef, onValue, set } from "firebase/database";
 import { ref as storageRef, uploadBytes } from "firebase/storage";
+import { useContext } from "react";
+import { MememoriesContext } from "../store/Memories-Context";
 
 const UploadNewMemoryScreen = ({ navigation }) => {
+  const context = useContext(MememoriesContext);
   const [selectedImage, setSelectedImage] = useState(null);
   const [caption, setCaption] = useState("");
   const [memoryNumber, setMemoryNumber] = useState();
-  const query = dbRef(db, "memories/");
   const user = auth.currentUser;
+  const query = dbRef(db, "memories/" + `${user.uid}/`);
 
   useEffect(() => {
     onValue(query, (snapshot) => {
       const data = snapshot;
-      let newMemoryNumber = (data.size + 1).toString();
-      setMemoryNumber(newMemoryNumber);
+      setMemoryNumber(data.size.toString());
     });
   }, []);
 
@@ -52,22 +54,25 @@ const UploadNewMemoryScreen = ({ navigation }) => {
     navigation.goBack();
   };
 
-  const postHandler = async ({}) => {
+  const postHandler = async () => {
     const respone = await fetch(selectedImage);
     const blob = await respone.blob();
-    const imageRef = storageRef(storage, memoryNumber);
+    const imageRef = storageRef(storage, `${user.uid}${memoryNumber}`);
     imageRef.name = memoryNumber;
 
     uploadBytes(imageRef, blob).then((snapshot) => {
-      set(dbRef(db, "memories/" + user.uid + memoryNumber), {
+      const newMemory = {
         caption: caption,
         uri: snapshot.metadata.fullPath,
         userID: user.uid,
-      });
+      };
+      set(dbRef(db, "memories/" + `${user.uid}/` + memoryNumber), newMemory);
+      context.addMemory(newMemory);
     });
 
-    setSelectedImage(null);
+    setSelectedImage("");
     setCaption("");
+
     navigation.goBack();
   };
 
@@ -99,7 +104,7 @@ const UploadNewMemoryScreen = ({ navigation }) => {
               title="Post"
               backgroundColor={globalStyles.colors.primary}
               color={globalStyles.colors.backgroundColor}
-              onPress={postHandler}
+              onPress={postHandler.bind(this, navigation)}
             />
           </View>
         </KeyboardAvoidingView>

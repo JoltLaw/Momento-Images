@@ -3,55 +3,18 @@ import AddMemoryBtn from "../components/HomePage/AddMemoryBtn";
 import { View, FlatList, StyleSheet, Text } from "react-native";
 import MemoryBtn from "../components/general/MemoryBtn";
 import { useState, useEffect } from "react";
-import { db, auth, storage } from "../firebase/firebase";
-import { ref as storageRef, getDownloadURL } from "firebase/storage";
-import {
-  ref as databaseRef,
-  child,
-  get,
-  query,
-  onValue,
-} from "firebase/database";
+import { useContext } from "react";
+import { MememoriesContext } from "../store/Memories-Context";
 
-function MemoryScreen({ navigation, route }) {
-  // const [userId, setUserId] = useState();
-  const [posts, setPosts] = useState([]);
-  const [showList, setShowList] = useState(false);
-  const [imageNumbers, setImageNumbers] = useState([]);
-  const [images, setImages] = useState([]);
-  const dbRef = databaseRef(db);
+function MemoryScreen({ navigation }) {
+  const context = useContext(MememoriesContext);
 
-  let i = 0;
-
-  useEffect(() => {
-    const userId = auth.currentUser.uid;
-
-    get(child(dbRef, "memories/")).then((snapshot) => {
-      setPosts([]);
-      const dataEntries = snapshot.size + 1;
-      i = 1;
-
-      while (i < dataEntries) {
-        const entery = databaseRef(db, "memories/" + userId + i);
-        onValue(entery, (snapshot) => {
-          let data = snapshot.val();
-          // console.log(getImage(`${data.uri}`));
-          setPosts((prevState) => [data, ...prevState]);
-        });
-
-        i++;
-      }
-
-      posts.forEach((post) => {
-        setImageNumbers((prevState) => [...prevState, post.uri]);
-      });
-      setShowList(true);
+  const openMemory = (item, image) => {
+    navigation.navigate("viewMemory", {
+      post: item.uri,
+      image: image,
+      index: item.index,
     });
-  }, []);
-
-  const openMemory = (item) => {
-    console.log(item.uri);
-    navigation.navigate("viewMemory", { post: item.uri });
   };
 
   const addNewMemoryScreen = () => {
@@ -63,22 +26,27 @@ function MemoryScreen({ navigation, route }) {
       <HomeHeader navigation={navigation} />
       <AddMemoryBtn onPress={addNewMemoryScreen} />
 
-      {showList && (
+      {context.memories.length > 0 && (
         <FlatList
-          data={posts}
+          data={context.memories}
           numColumns={3}
           renderItem={(memory) => {
             return (
               <MemoryBtn
                 post={memory.item}
-                key={memory.item.caption}
-                onPress={openMemory.bind(this, { uri: memory.item.uri })}
+                key={memory.index}
+                onPress={openMemory.bind(this, {
+                  uri: memory.item.uri,
+                  index: memory.index,
+                })}
               />
             );
           }}
           contentContainerStyle={styles.list}
         />
       )}
+
+      {context.memories == 0 && <Text>No memories saved yet</Text>}
     </View>
   );
 }

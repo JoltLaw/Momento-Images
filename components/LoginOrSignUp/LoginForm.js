@@ -10,13 +10,16 @@ import MomentoBTN from "../general/MomentoBTN";
 import LinkButton from "../general/LinkButton";
 import globalStyles from "../../assets/styles/GlobalStyles";
 import { useState } from "react";
-import { auth } from "../../firebase/firebase";
+import { auth, db } from "../../firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
+import { ref, set, onValue } from "firebase/database";
+import { Alert } from "react-native";
 
 const LoginForm = ({ navigation }) => {
   const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setpasswordValue] = useState("");
+  const query = ref(db, "memories/");
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -47,6 +50,9 @@ const LoginForm = ({ navigation }) => {
       .catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
+        Alert.alert(errorCode, errorMessage, [
+          { text: "Okay", onPress: () => {} },
+        ]);
       });
   };
   return (

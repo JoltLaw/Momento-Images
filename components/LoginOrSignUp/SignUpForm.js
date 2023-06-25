@@ -4,6 +4,7 @@ import {
   Text,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
 } from "react-native";
 import Input from "./Input";
 import MomentoBTN from "../general/MomentoBTN";
@@ -73,8 +74,28 @@ const SignUpForm = ({ navigation }) => {
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
+          Alert.alert(errorCode, errorMessage, [
+            { text: "Okay", onPress: () => {} },
+          ]);
         });
     } else {
+      if (!emailIsValid && !passwordIsValid) {
+        Alert.alert(
+          "Invalid Email and Password",
+          "Please double check your email and password",
+          [{ text: "okay", onPress: () => {} }]
+        );
+      } else if (!emailIsValid) {
+        Alert.alert(
+          "Invalid Email",
+          "Please double check your email, and confirmation email"
+        );
+      } else if (!passwordIsValid) {
+        Alert.alert(
+          "Invalid Password",
+          "Please double check your password, and confirmation password"
+        );
+      }
     }
   };
 

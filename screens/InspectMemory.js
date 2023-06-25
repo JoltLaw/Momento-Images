@@ -1,74 +1,174 @@
-import { View, Image, Text, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Image,
+  Text,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Alert,
+} from "react-native";
+import { useContext } from "react";
+import { MememoriesContext } from "../store/Memories-Context";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { auth, db, storage } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase";
 import { useEffect, useState } from "react";
 import globalStyles from "../assets/styles/GlobalStyles";
-import { ref as storageRef, getDownloadURL } from "firebase/storage";
-import { ref as databaseRef, onValue } from "firebase/database";
+// import { ref as databaseRef, onValue } from "firebase/database";
+import { TextInput } from "react-native-gesture-handler";
+import LinkButton from "../components/general/LinkButton";
+import MomentoBTN from "../components/general/MomentoBTN";
 
 const InspectMemory = ({ navigation, route }) => {
-  const dbRef = databaseRef(db);
+  const context = useContext(MememoriesContext);
+  route.params;
   const [caption, setCaption] = useState("");
-  const { editMode, setEditMode } = useState(false);
-  const [image, setImage] = useState();
+  const [edit, setEdit] = useState(false);
+  const [newCaption, setNewCaption] = useState(null);
   useEffect(() => {
-    const getImage = async (i) => {
-      const imageName = "" + i;
-      const enteryImage = storageRef(storage, imageName);
-      await getDownloadURL(enteryImage).then((x) => {
-        setImage(x);
-      });
-    };
     userId = auth.currentUser.uid;
-    const captionQuery = databaseRef(
-      db,
-      "memories/" + userId + route.params.post
-    );
-    onValue(captionQuery, (snapshot) => {
-      const data = snapshot.val();
-      setCaption(data.caption);
-      getImage(data.uri);
-    });
+    setCaption(context.memories[route.params.index].caption);
   }, []);
 
-  const changeMode = () => {
-    // setEditMode(true);
+  const newCaptionChangeHandler = (enteredText) => {
+    setNewCaption(enteredText);
+  };
+
+  function changeMode() {
+    setEdit(!edit);
+  }
+
+  function backToHome() {
+    navigation.goBack();
+  }
+
+  const updatePost = () => {
+    if (newCaption && newCaption.trim() != "") {
+      setCaption(newCaption);
+      context.updateMemory(route.params.index, route.params.post, newCaption);
+      setEdit(!edit);
+    } else {
+      Alert.alert("No Caption", "All photos are required to have a caption", {
+        text: "Okay",
+        onPress: () => {
+          return;
+        },
+      });
+    }
+  };
+
+  const deletePostHandler = () => {
+    const deleted = context.deleteMemory(route.params.index, route.params.post);
+    backToHome();
   };
 
   return (
-    <View>
-      <Image style={styles.image} source={{ uri: image }} />
-      <View style={styles.rowContainer}>
-        <Text style={styles.content}>{caption}</Text>
-        <Pressable
-          style={({ pressed }) => (pressed ? styles.pressed : "")}
-          onPress={changeMode()}
-        >
-          <Ionicons
-            style={{ color: globalStyles.colors.darkPrimary, fontSize: 22 }}
-            name="pencil"
-          />
-        </Pressable>
-      </View>
-    </View>
+    <ScrollView>
+      <KeyboardAvoidingView behavior="position">
+        <View style={styles.container}>
+          <Image style={styles.image} source={{ uri: route.params.image }} />
+          <View style={styles.rowContainer}>
+            {!edit && <Text style={styles.content}>{caption}</Text>}
+            {edit && (
+              <TextInput
+                placeholder={caption}
+                value={newCaption}
+                onChangeText={newCaptionChangeHandler}
+                style={[
+                  {
+                    fontSize: 18,
+                    minHeight: 140,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: globalStyles.colors.primary,
+                    // textAlign: "left",
+                    padding: 8,
+                    width: "100%",
+                  },
+                ]}
+                multiline={true}
+              />
+            )}
+
+            {!edit && (
+              <Pressable
+                style={({ pressed }) => (pressed ? styles.pressed : "")}
+                onPress={changeMode}
+              >
+                <Ionicons
+                  style={{
+                    color: globalStyles.colors.darkPrimary,
+                    fontSize: 22,
+                  }}
+                  name="pencil"
+                />
+              </Pressable>
+            )}
+          </View>
+          <View style={styles.btnContainer}>
+            {!edit && (
+              <Pressable
+                style={({ pressed }) =>
+                  pressed
+                    ? [styles.pressed, { alignSelf: "center" }]
+                    : { alignSelf: "center" }
+                }
+                onPress={deletePostHandler}
+              >
+                <Ionicons
+                  name="trash-bin-sharp"
+                  color={globalStyles.colors.red}
+                  size={40}
+                />
+              </Pressable>
+            )}
+            {!edit && (
+              <LinkButton
+                title="Back"
+                style={styles.backBtn}
+                onPress={backToHome}
+              />
+            )}
+            {edit && (
+              <View style={styles.rowContainer}>
+                <MomentoBTN
+                  title="Cancel"
+                  color={globalStyles.colors.backgroundColor}
+                  backgroundColor={globalStyles.colors.red}
+                  onPress={changeMode}
+                />
+                <MomentoBTN
+                  title="Update"
+                  color={globalStyles.colors.backgroundColor}
+                  backgroundColor={globalStyles.colors.primary}
+                  onPress={updatePost}
+                />
+              </View>
+            )}
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </ScrollView>
   );
 };
 
 export default InspectMemory;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   image: {
     width: "100%",
     height: 400,
     backgroundColor: globalStyles.colors.primary,
   },
   rowContainer: {
+    gap: 7,
     padding: 10,
     justifyContent: "space-between",
     width: "100%",
     flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: globalStyles.colors.inputTextColor,
   },
   pressed: {
     opacity: 0.5,
@@ -76,5 +176,17 @@ const styles = StyleSheet.create({
   content: {
     width: "85%",
     fontSize: 18,
+    minHeight: 140,
+  },
+  btnContainer: {
+    borderTopColor: globalStyles.colors.inputTextColor,
+    borderTopWidth: 1,
+    alignItems: "flex-start",
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    width: "100%",
+  },
+  backBtn: {
+    // alignSelf: "flex-start",
   },
 });

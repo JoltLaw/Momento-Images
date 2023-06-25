@@ -14,7 +14,7 @@ const MemoryBtn = ({ post, key, onPress }) => {
   };
   getImage(post.uri);
   return (
-    <Pressable key={key} style={styles.btn} onPress={onPress}>
+    <Pressable key={key} style={styles.btn} onPress={onPress.bind(this, image)}>
       <Image source={{ uri: image }} style={styles.image} />
     </Pressable>
   );
