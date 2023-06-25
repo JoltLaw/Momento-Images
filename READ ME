@@ -1,0 +1,39 @@
+######READ ME######
+
+Momento is a digital scrap booking application that uses the structuring and UI methods that make instagram popular to help you format your pictures with captions.
+Think of it sort of like an unsocial social media platform, who's goal is to help you remember important momments.
+
+
+Basic application Blueprint:
+
+            Welcome Screen
+                   |                 <-------
+                   |                        |
+  Login  ------------------- Signup         |
+    |                          |            |
+    --------------|-------------            | 
+       -->        |                         |
+      |           |                         |
+create memory--Home Screen-------options    |
+                  |                |        |
+                  |                |        |
+            Inspect Memory      Log out------
+
+
+The user starts out on the Welcome screen where they're asked if they'd like sign up or login
+from there they're directed to the respective page but maintain the ability to switch between the two.
+Upon creation of an account the users infomation is sent off to the data base and stored as authentication
+this is important because the project works of off the firebase authenticaion.
+
+after a user has signed up or logged in they're directed to the home screen where they'll initally have two options.
+use the drawer navigation to switch over to options and sign out of their account or create a memory.
+
+Upon log out the user will be redirected to the inital screen they selected thanks to firebase.
+
+whena  user creates a memory they select an image and write a caption, which are both then sent back to the database/storage
+
+when a new memory has been created it will apear on the home screen in a simialr fashion to how instagram posts are displayed
+upon clicking on one the user can view the caption and has the option to update or delete the post theyre viewing,
+which will then update context and database/storage object.
+
+that pretty much wraps up the blueprinting and example of how the app works
